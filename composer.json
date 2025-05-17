@@ -10,12 +10,18 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "composer/semver": "^3.4",
+        "elgigi/commonmark-emoji": "*",
+        "graham-campbell/github": "^13.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "livewire/flux": "^2.1.1",
-        "livewire/volt": "^1.7.0"
+        "livewire/livewire": "^3.6",
+        "livewire/volt": "^1.7.0",
+        "spatie/laravel-data": "^4.15"
     },
     "require-dev": {
+        "driftingly/rector-laravel": "^2.0",
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^3.4",
         "laravel/pail": "^1.2.2",
@@ -78,7 +84,8 @@
             "@putenv XDEBUG_MODE=coverage",
             "pest --colors=always --parallel --coverage"
         ],
-        "phpstan": "phpstan analyse --ansi --memory-limit=-1"
+        "phpstan": "phpstan analyse --ansi --memory-limit=-1",
+        "rector": "rector --ansi"
     },
     "extra": {
         "laravel": {

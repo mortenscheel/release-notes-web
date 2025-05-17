@@ -1,14 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 use SoloTerm\Solo\Commands\Command;
 use SoloTerm\Solo\Commands\EnhancedTailCommand;
 use SoloTerm\Solo\Commands\MakeCommand;
-use SoloTerm\Solo\Hotkeys;
+use SoloTerm\Solo\Hotkeys\DefaultHotkeys;
+use SoloTerm\Solo\Hotkeys\VimHotkeys;
+use SoloTerm\Solo\Manager;
 use SoloTerm\Solo\Themes;
+use SoloTerm\Solo\Themes\DarkTheme;
+use SoloTerm\Solo\Themes\LightTheme;
 
 // Solo may not (should not!) exist in prod, so we have to
 // check here first to see if it's installed.
-if (!class_exists('\SoloTerm\Solo\Manager')) {
+if (! class_exists(Manager::class)) {
     return [
         //
     ];
@@ -23,8 +29,8 @@ return [
     'theme' => env('SOLO_THEME', 'dark'),
 
     'themes' => [
-        'light' => Themes\LightTheme::class,
-        'dark' => Themes\DarkTheme::class,
+        'light' => LightTheme::class,
+        'dark' => DarkTheme::class,
     ],
 
     /*
@@ -35,8 +41,8 @@ return [
     'keybinding' => env('SOLO_KEYBINDING', 'default'),
 
     'keybindings' => [
-        'default' => Hotkeys\DefaultHotkeys::class,
-        'vim' => Hotkeys\VimHotkeys::class,
+        'default' => DefaultHotkeys::class,
+        'vim' => VimHotkeys::class,
     ],
 
     /*
@@ -53,6 +59,7 @@ return [
         'HTTP' => 'php artisan serve',
 
         // Lazy commands do not automatically start when Solo starts.
+        'PhpStan' => Command::from('vendor/bin/phpstan analyse --memory-limit=-1 --pro')->lazy(),
         'Dumps' => Command::from('php artisan solo:dumps')->lazy(),
         'Reverb' => Command::from('php artisan reverb:start --debug')->lazy(),
         // 'Pint' => Command::from('./vendor/bin/pint --ansi')->lazy(),
@@ -79,5 +86,5 @@ return [
      * the dumps. This is the address. You probably don't need to change
      * this unless the default is already taken for some reason.
      */
-    'dump_server_host' => env('SOLO_DUMP_SERVER_HOST', 'tcp://127.0.0.1:9984')
+    'dump_server_host' => env('SOLO_DUMP_SERVER_HOST', 'tcp://127.0.0.1:9984'),
 ];
