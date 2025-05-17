@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+use function strtolower;
+
 class IndexRepositories extends Component
 {
     use WithPagination;
@@ -29,8 +31,8 @@ class IndexRepositories extends Component
             ->withCount('releases')
             ->when($this->search, function (Builder $query): void {
                 $query->where(function (Builder $query): void {
-                    $query->where('organization', 'like', '%'.$this->search.'%')
-                        ->orWhere('repository', 'like', '%'.$this->search.'%');
+                    $query->whereRaw('LOWER(organization) LIKE ?', '%'.strtolower($this->search).'%')
+                        ->orWhereRaw('LOWER(repository) LIKE ?', '%'.strtolower($this->search).'%');
                 });
             });
         $this->count = $query->count();

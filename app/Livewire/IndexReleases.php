@@ -29,8 +29,8 @@ class IndexReleases extends Component
         $query = $this->repository->releases()
             ->when($this->search, function (Builder $query): void {
                 $query->where(function (Builder $query): void {
-                    $query->where('tag', 'like', '%'.$this->search.'%')
-                        ->orWhere('body', 'like', '%'.$this->search.'%');
+                    $query->whereRaw('LOWER(body) LIKE ?', ['%'.strtolower($this->search).'%'])
+                        ->orWhere('tag', 'like', '%'.$this->search.'%');
                 });
             })
             ->when(request()->get('from'), function (Builder $query, $from): void {
