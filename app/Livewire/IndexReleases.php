@@ -54,7 +54,7 @@ class IndexReleases extends Component
 
     /** @return Builder<Release> */
     #[Computed]
-    public function query(): Builder
+    public function query(): mixed
     {
         $query = $this->repository->releases()
             ->when($this->search, function (Builder $query): void {
