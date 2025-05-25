@@ -14,13 +14,16 @@ return new class extends Migration
             $table->increments('id');
             $table->foreignId('repository_id')->constrained('repositories')->onDelete('cascade');
             $table->string('tag');
-            $table->string('version');
+            $table->unsignedTinyInteger('major');
+            $table->unsignedTinyInteger('minor');
+            $table->unsignedTinyInteger('patch');
             $table->string('stability');
             $table->string('url');
             $table->text('body')->nullable();
             $table->timestamp('published_at');
             $table->timestamps();
             $table->unique(['repository_id', 'tag']);
+            $table->index(['repository_id', 'major', 'minor', 'patch']);
         });
     }
 

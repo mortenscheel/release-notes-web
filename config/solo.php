@@ -73,7 +73,7 @@ return [
      * PTY and some ANSI rendering things. Not all environments have Screen,
      * so you can turn it off for a slightly degraded experience.
      */
-    'use_screen' => (bool) env('SOLO_USE_SCREEN', false),
+    'use_screen' => (bool) env('SOLO_USE_SCREEN', true),
 
     /*
     |--------------------------------------------------------------------------

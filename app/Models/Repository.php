@@ -14,21 +14,25 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 use function sprintf;
 
+/**
+ * @property string $organization
+ * @property string $repository
+ * @property string $url
+ */
 class Repository extends Model
 {
     /** @use HasFactory<RepositoryFactory> */
     use HasFactory;
 
     protected $fillable = [
-        'organization',
-        'repository',
+        'name',
         'description',
         'stars',
         'synced_at',
     ];
 
     protected $casts = [
-        'synced_at' => 'timestamp',
+        'synced_at' => 'datetime',
         'stars' => 'integer',
     ];
 
@@ -48,27 +52,41 @@ class Repository extends Model
         return $this->hasOne(Release::class)->ofMany('published_at');
     }
 
-    /**
-     * @param  Builder<$this>  $query
-     */
-    public function scopeSyncable(Builder $query): void
+    /** @return Attribute<string,never> */
+    public function organization(): Attribute
     {
-        $query->where(function (Builder $query): void {
-            $query->whereNull('synced_at')
-                ->orWhere('synced_at', '<', now()->subHours(24));
-        });
+
+        return Attribute::get(fn (): string => str($this->name)->before('/')->value());
     }
 
-    /** @return Attribute<non-falsy-string,never> */
-    public function fullName(): Attribute
+    /** @return Attribute<string,never> */
+    public function repository(): Attribute
     {
-        return Attribute::get(fn (): string => sprintf('%s/%s', $this->organization, $this->repository));
+        return Attribute::get(fn (): string => str($this->name)->after('/')->value());
     }
 
     /** @return Attribute<non-falsy-string,never> */
     public function url(): Attribute
     {
-        return Attribute::get(fn (): string => sprintf('https://github.com/%s/%s', $this->organization,
-            $this->repository));
+        return Attribute::get(fn (): string => sprintf('https://github.com/%s', $this->name));
+    }
+
+    /** @return Attribute<bool,never> */
+    public function isSyncable(): Attribute
+    {
+        return Attribute::get(fn (): bool => $this->synced_at?->isBefore(now()->subHours(24)) ?? true);
+    }
+
+    /**
+     * @param  Builder<$this>  $query
+     */
+    public function scopeOrderByLatestRelease(Builder $query, string $direction = 'desc'): void
+    {
+        $query->orderBy(Release::select('published_at')
+            ->whereColumn('releases.repository_id', 'repositories.id')
+            ->latest()
+            ->take(1),
+            $direction
+        );
     }
 }

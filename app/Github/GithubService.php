@@ -26,6 +26,8 @@ class GithubService
 
     public function getGithubRepository(string $organization, string $repository): GithubRepository
     {
-        return GithubRepository::from($this->github->repo()->show($organization, $repository));
+        $data = $this->github->repo()->show($organization, $repository);
+
+        return GithubRepository::from($data);
     }
 }

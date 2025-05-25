@@ -9,11 +9,8 @@ use Spatie\LaravelData\Data;
 
 class GithubRepository extends Data
 {
-    #[MapInputName('owner.login')]
-    public string $organization;
-
-    #[MapInputName('name')]
-    public string $repository;
+    #[MapInputName('full_name')]
+    public string $name;
 
     public string $description;
 

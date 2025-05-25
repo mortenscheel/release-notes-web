@@ -4,27 +4,57 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
+use App\Models\Release;
 use App\Models\Repository;
-use Composer\Semver\VersionParser;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
-use Throwable;
+use Livewire\Features\SupportRedirects\Redirector;
+use Livewire\WithPagination;
+use Log;
+
+use function redirect;
+use function version_compare;
 
 class IndexReleases extends Component
 {
+    use WithPagination;
+
     public Repository $repository;
 
-    public string $search;
+    #[Url]
+    public string $search = '';
 
-    public int $count;
+    #[Url]
+    public string $from = '';
 
-    public function mount(): void
+    #[Url]
+    public string $to = '';
+
+    /** @var Collection<int, string> */
+    public Collection $tags;
+
+    public function mount(string $name): Redirector|RedirectResponse|null
     {
-        $this->search = request()->get('search', '');
+        if (! $repository = Repository::whereName($name)->first()) {
+            return redirect()->route('repositories.index')->error("Repository $name not found.");
+        }
+        $this->repository = $repository;
+        $this->tags = $this->repository->releases()
+            ->pluck('tag')
+            ->sortDesc(SORT_NATURAL);
+
+        return null;
     }
 
-    public function render(): View
+    /** @return Builder<Release> */
+    #[Computed]
+    public function query(): Builder
     {
         $query = $this->repository->releases()
             ->when($this->search, function (Builder $query): void {
@@ -33,25 +63,44 @@ class IndexReleases extends Component
                         ->orWhere('tag', 'like', '%'.$this->search.'%');
                 });
             })
-            ->when(request()->get('from'), function (Builder $query, $from): void {
-                try {
-                    $normalized = (new VersionParser)->normalize($from);
-                    $query->where('version', '>=', $normalized);
-                } catch (Throwable) {
-                }
+            ->when($this->from, function (Builder $query, $from): void {
+                $query->whereVersion('>=', $from);
             })
-            ->when(request()->get('to'), function (Builder $query, $to): void {
-                try {
-                    $normalized = (new VersionParser)->normalize($to);
-                    $query->where('version', '<=', $normalized);
-                } catch (Throwable) {
-                }
-            })
-            ->orderBy('published_at', 'desc');
-        $this->count = $query->count();
+            ->when($this->to, function (Builder $query, $to): void {
+                $query->whereVersion('<=', $to);
 
-        return view('livewire.index-releases', [
-            'releases' => $query->simplePaginate(10),
-        ]);
+            })
+            ->when($this->from || $this->to,
+                fn (Builder $query) => $query->orderByVersion(),
+                fn (Builder $query) => $query->orderBy('published_at', 'desc')
+            );
+        Log::debug($query->toRawSql(), ['count' => $query->count()]);
+
+        return $query;
+    }
+
+    /** @return string[] */
+    #[Computed]
+    public function fromTags(): array
+    {
+        return $this->tags->when($this->to, fn (Collection $tags) => $tags->filter(fn (string $tag): bool => version_compare($tag, $this->to, '<=')))->toArray();
+    }
+
+    /** @return string[] */
+    #[Computed]
+    public function toTags(): array
+    {
+        return $this->tags->when($this->from, fn (Collection $tags) => $tags->filter(fn (string $tag): bool => version_compare($tag, $this->from, '>=')))->toArray();
+    }
+
+    public function resetSearch(): void
+    {
+        $this->reset(['search', 'from', 'to']);
+    }
+
+    #[Title('Releases')]
+    public function render(): View
+    {
+        return view('livewire.index-releases');
     }
 }

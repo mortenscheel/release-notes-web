@@ -4,37 +4,32 @@ declare(strict_types=1);
 
 namespace App\Livewire;
 
-use App\Github\GithubService;
-use App\Jobs\SyncRepositoryReleasesJob;
-use App\Models\Repository;
+use App\Actions\AddRepository;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Throwable;
 
+use function redirect;
+use function route;
+
 class AddRepositoryModal extends Component
 {
     #[Validate('required|string')]
-    public string $organization = '';
+    public string $name = '';
 
-    #[Validate('required|string')]
-    public string $repository = '';
-
-    public function save(): void
+    public function save(): ?RedirectResponse
     {
-        $params = $this->validate();
-        if (Repository::where($params)->exists()) {
-            $this->addError('repository', 'Repository already exists.');
-
-            return;
-        }
+        $this->validate();
         try {
-            $githubRepo = app(GithubService::class)->getGithubRepository($params['organization'], $params['repository']);
-            $repo = Repository::create($githubRepo->toArray());
-            SyncRepositoryReleasesJob::dispatchSync($repo);
-            $this->redirectRoute('repositories.show', $params);
+            $repository = (new AddRepository)($this->name);
+
+            return redirect(route('repositories.show', ['name' => $repository->name]))->success("$repository->name added.");
         } catch (Throwable $e) {
-            $this->addError('repository', $e->getMessage());
+            $this->addError('name', $e->getMessage());
+
+            return null;
         }
     }
 
