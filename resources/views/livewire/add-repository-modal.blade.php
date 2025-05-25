@@ -16,6 +16,7 @@
             wire:model="name"
             label="Repository name"
             placeholder="laravel/framework"
+            autocomplete="off"
             autofocus
         />
 
