@@ -47,7 +47,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 COPY package.json package-lock.json* ./
 
 # Install Node dependencies
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy application files
 COPY . .
@@ -64,7 +64,7 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Production stage
 FROM php:8.2-fpm-alpine
 
-# Install runtime dependencies only
+# Install runtime dependencies
 RUN apk add --no-cache \
     postgresql-libs \
     libpng \
@@ -72,8 +72,13 @@ RUN apk add --no-cache \
     oniguruma \
     nodejs
 
-# Install PHP extensions (same as base)
-RUN docker-php-ext-install \
+# Install build dependencies, PHP extensions, then clean up
+RUN apk add --no-cache --virtual .build-deps \
+    postgresql-dev \
+    libpng-dev \
+    libzip-dev \
+    oniguruma-dev \
+    && docker-php-ext-install \
     pdo_pgsql \
     pgsql \
     mbstring \
@@ -81,7 +86,8 @@ RUN docker-php-ext-install \
     exif \
     pcntl \
     bcmath \
-    gd
+    gd \
+    && apk del .build-deps
 
 # Install Redis PHP extension
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
