@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 use SoloTerm\Solo\Commands\Command;
 use SoloTerm\Solo\Commands\EnhancedTailCommand;
-use SoloTerm\Solo\Commands\MakeCommand;
 use SoloTerm\Solo\Hotkeys\DefaultHotkeys;
 use SoloTerm\Solo\Hotkeys\VimHotkeys;
 use SoloTerm\Solo\Manager;
-use SoloTerm\Solo\Themes;
 use SoloTerm\Solo\Themes\DarkTheme;
 use SoloTerm\Solo\Themes\LightTheme;
 

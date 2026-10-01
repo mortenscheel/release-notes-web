@@ -79,7 +79,7 @@ class Release extends Model
         $extensions = [
             new EmojiExtension,
         ];
-        if ($search !== null && $search !== '' && $search !== '0') {
+        if (! in_array($search, [null, '', '0'], true)) {
             $extensions[] = new SearchHighlighterExtension($search);
         }
 
@@ -90,10 +90,14 @@ class Release extends Model
     {
         static::saving(function (Release $release): void {
             $normalized = (new VersionParser)->normalize($release->tag);
+
             [$major, $minor, $patch] = explode('.', $normalized);
-            $release->major = (int) $major;
-            $release->minor = (int) $minor;
-            $release->patch = (int) $patch;
+            $major = (int) $major;
+            $minor = (int) $minor;
+            $patch = (int) $patch;
+            /** @var int<0,max> $major */
+            /** @var int<0,max> $minor */
+            /** @var int<0,max> $patch */
             $release->stability = VersionParser::parseStability($release->tag);
             if (trim($release->body ?? '') === '') {
                 $release->body = null;
